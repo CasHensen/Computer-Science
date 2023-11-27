@@ -1,0 +1,27 @@
+Input documents
+->
+TODO: BOOTSTRAPPING
+->
+Data cleaning
+    - TODO: list of brands (of the web, from paper)
+    - TODO: other units than Hz and inch?
+->
+Create distance matrix
+   - sameShop to inf
+   - diffBrand to inf
+->
+TODO: To binary represantation:
+    - TODO: model words --> delete commas
+    - TODO: shingling (dat is dus per woord en heb nu q-grams met Jacard similarity)
+->
+TODO: Construct signature matrix
+    - TODO: minhasing
+->
+TODO: LSH
+    - TODO: adjust dissimilarities
+->
+TODO: MSM and clustering
+->
+TODO: compute f1-scores and such
+->
+TODO: different if from same webshop
