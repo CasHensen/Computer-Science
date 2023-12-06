@@ -3,22 +3,18 @@ Input documents
 TODO: BOOTSTRAPPING
 ->
 Data cleaning
-    - TODO: list of brands (of the web, from paper) 
-    - TODO: other units than Hz and inch? 
 ->
-Create distance matrix
-   - sameShop to inf
-   - diffBrand to inf
+Create distance matrix (some distances set to inf)
 ->
-TODO: To binary representation:
-    - TODO: model words --> delete commas
-    - TODO: shingling (dat is dus per woord en heb nu q-grams met Jacard similarity)
+To binary represantation:
+    - TODO: shingling (dat is dus per woord en heb nu q-grams met Jacard similarity, klopt nog niet helemaal)
 ->
 TODO: Construct signature matrix
     - TODO: minhasing
 ->
 TODO: LSH
-    - TODO: adjust dissimilarities
+->
+TODO: create inf distance matrix (same webshop, different brand or different bucket by LSH)
 ->
 TODO: MSM and clustering
 ->
