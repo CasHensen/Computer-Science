@@ -1,5 +1,6 @@
 import json
 import functions
+import random
 # import re
 
 # Load all data
@@ -31,6 +32,9 @@ for i in range(0, len(adjusted_list)):
         if model_words_of_item_i.__contains__(all_model_words[element]):
             binary_model_words_of_i.append(element)
     binary_representation.append(binary_model_words_of_i)
+
+random.seed(1)
+minhash = functions.minHashing(binary_representation, int(len(binary_representation)/2), len(all_model_words))
 
 # inf_distances = []  # store indexes of columns that respective row has infinite distance with (either different brand or same shop)
 # for i in range(0, len(adjusted_list)):

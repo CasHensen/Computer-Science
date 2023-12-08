@@ -1,6 +1,8 @@
 import re
+import random
 # import pandas as pd
-# import numpy as np
+import numpy as np
+from random import randint
 
 
 # Data cleaning of a string
@@ -116,3 +118,45 @@ def mw(C, D):
 
 # Returns the clusters
 # TODO: def hClustering(dist, epsilon):
+
+
+def minHashing(binary_data, number_of_hashes, number_of_mw):
+    primes = [i for i in range(number_of_hashes, 100) if isPrime(i)]    # welke bounds?????????????????????
+    parameters_of_hash_functions = []
+    for i in range(0, number_of_hashes):
+        a = randint(0, 20)                                      # welke bounds?????????????????????
+        b = x = randint(0, 20)                                  # welke bounds?????????????????????
+        p = random.choice(primes)
+        parameters = [a, b, p]
+        parameters_of_hash_functions.append(parameters)
+    return apply_hashes(binary_data, parameters_of_hash_functions, number_of_mw)
+
+
+def isPrime(value):
+    if value >= 2:
+        for n in range(2, value):
+            if (value % n) == 0:
+                return False
+        return True
+    else:
+        return False
+
+
+def apply_hashes(binary_data, param_hash_functions, number_of_mw):  # param_hash_functions = [[a0, b0, p0], [a1, b1, p1], ...]
+    number_of_hash_functions = len(param_hash_functions)
+    number_of_items = len(binary_data)
+    hash_results = np.ones((number_of_hash_functions, number_of_items)) * np.inf  # initialize with infinity
+
+    for col in range(0, number_of_mw):
+        for hash_func in range(0, number_of_hash_functions):
+            a = param_hash_functions[hash_func][0]
+            b = param_hash_functions[hash_func][1]
+            p = param_hash_functions[hash_func][2]
+            hash_value = (a + b * (col+1)) % p
+
+            for i in range(0, number_of_items):
+                if binary_data[i].__contains__(col):
+                    if hash_value < hash_results[hash_func][i]:
+                        hash_results[hash_func][i] = hash_value
+
+    return hash_results
