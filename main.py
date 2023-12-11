@@ -33,8 +33,28 @@ for i in range(0, len(adjusted_list)):
             binary_model_words_of_i.append(element)
     binary_representation.append(binary_model_words_of_i)
 
-random.seed(1)
-minhash = functions.minHashing(binary_representation, int(len(binary_representation)/2), len(all_model_words))
+print(len(all_model_words))
+
+random.seed(0)
+signature_matrix = functions.minHashing(binary_representation, int(len(binary_representation)/2), len(all_model_words))
+print(signature_matrix)
+
+
+matches = functions.LSH(signature_matrix, 28, 29, len(signature_matrix))
+print(matches)
+
+inf_distances = []  # store indexes of columns that respective row has infinite distance with (either different brand or same shop)
+for item_i in range(0, len(adjusted_list)):
+    temp_for_inf_distance = []
+    for item_j in range(0, len(adjusted_list)):
+        if item_i != item_j and functions.diffBrand(adjusted_list[item_i], adjusted_list[item_j]):
+        # if item_i != item_j and (functions.sameShop(adjusted_list[item_i], adjusted_list[item_j] or functions.diffBrand(adjusted_list[item_i], adjusted_list[item_j]))):
+        # if item_i != item_j and (functions.sameShop(adjusted_list[item_i], adjusted_list[item_j]) or functions.diffBrand(adjusted_list[item_i], adjusted_list[item_j]) and matches[item_i].__contains__(item_j)):
+            temp_for_inf_distance.append(item_j)
+    inf_distances.append(temp_for_inf_distance)
+print(inf_distances)
+
+# int(len(binary_representation)/2) equals 812
 
 # inf_distances = []  # store indexes of columns that respective row has infinite distance with (either different brand or same shop)
 # for i in range(0, len(adjusted_list)):

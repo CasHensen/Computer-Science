@@ -3,6 +3,8 @@ import random
 # import pandas as pd
 import numpy as np
 from random import randint
+from math import ceil, sqrt
+from itertools import permutations
 
 
 # Data cleaning of a string
@@ -53,12 +55,16 @@ def sameShop(p_i, p_j):
 
 # True if brands of products i and j are different
 def diffBrand(p_i, p_j):
+    title_pi = dataCleaningOfSingleString(p_i["title"])
+    title_pj = dataCleaningOfSingleString(p_j["title"])
+    print(title_pi)
+    print(title_pj)
     brands = ["akai", "alba", "apple", "arcam", "arise", "bang", "bpl", "bush", "cge", "changhong", "compal", "curtis", "durabrand", "element", "finlux", "fujitsu", "funai", "google", "haier", "hisense", "hitachi", "itel", "jensen", "jvc", "kogan", "konka", "lg", "loewe", "magnavox", "marantz", "memorex", "micromax", "metz", "onida", "panasonic", "pensonic", "philips", "planar", "proscan", "rediffusion", "saba", "salora", "samsung", "sansui", "sanyo", "seiki", "sharp", "skyworth", "sony", "tatung", "tcl", "telefunken", "thomson", "tpv", "tp vision", "vestel", "videocon", "vizio", "vu", "walton", "westinghouse", "xiaomi", "zenith"]
-    if any(word in p_i["title"] for word in brands) & any(word in p_j["title"] for word in brands):
+    if any(word in title_pi for word in brands) & any(word in title_pj for word in brands):
         for brand in brands:
-            if p_i["title"].__contains__(brand) and p_j["title"].__contains__(brand):
+            if title_pi.__contains__(brand) and title_pj.__contains__(brand):
                 return False
-            if p_i["title"].__contains__(brand) and not p_j["title"].__contains__(brand) or not p_i["title"].__contains__(brand) and p_j["title"].__contains__(brand):
+            if title_pi.__contains__(brand) and not title_pj.__contains__(brand) or not title_pi.__contains__(brand) and title_pj.__contains__(brand):
                 return True
         return True
     return False  # only different brands important
@@ -110,29 +116,20 @@ def mw(C, D):
     union = C.union(D)
     return float(len(intersection))/float(len(union))
 
-# The TMWM similarity between the products i and j using the parameters alpha and bete
-# TODO: def TMWMSim(p_i, p_j , alpha, beta):
-
-# The minimum of the number of product features that product i and j contain
-# TODO: def minFeatures(p_i, p_j):
-
-# Returns the clusters
-# TODO: def hClustering(dist, epsilon):
-
 
 def minHashing(binary_data, number_of_hashes, number_of_mw):
-    primes = [i for i in range(number_of_hashes, 100) if isPrime(i)]    # welke bounds?????????????????????
+    primes = [i for i in range(5, 100) if checkIfPrime(i)]              # which bounds?????????????????????
     parameters_of_hash_functions = []
     for i in range(0, number_of_hashes):
-        a = randint(0, 20)                                      # welke bounds?????????????????????
-        b = x = randint(0, 20)                                  # welke bounds?????????????????????
+        a = randint(0, 20)                                      # which bounds?????????????????????
+        b = randint(0, 20)                                      # which bounds?????????????????????
         p = random.choice(primes)
         parameters = [a, b, p]
         parameters_of_hash_functions.append(parameters)
     return apply_hashes(binary_data, parameters_of_hash_functions, number_of_mw)
 
 
-def isPrime(value):
+def checkIfPrime(value):
     if value >= 2:
         for n in range(2, value):
             if (value % n) == 0:
@@ -160,3 +157,52 @@ def apply_hashes(binary_data, param_hash_functions, number_of_mw):  # param_hash
                         hash_results[hash_func][i] = hash_value
 
     return hash_results
+
+
+def LSH(signature_matrix, b, r, length):
+    number_of_items = len(signature_matrix[0])
+    index = 0
+    buckets = np.zeros((b, number_of_items))
+
+    for band in range(b):
+        total_col_sum = 0
+        for row in range(r):
+            index = band * r + row
+            total_col_sum += signature_matrix[index]
+        buckets[band] = hashBucket(np.array(total_col_sum), sqrt(length))
+
+    matches = []
+    for col1 in range(number_of_items):
+        matches_per_col = []  # at least one band same value
+        for col2 in range(number_of_items):
+            for buck_row in range(b):
+                if buckets[buck_row, col1] == buckets[buck_row, col2] and col1 != col2 and not matches_per_col.__contains__(col2):
+                    matches_per_col.append(col2)
+        matches.append(matches_per_col)
+
+    return matches
+
+
+def hashBucket(array, length):
+    results = []
+    range_of_a_bucket = length
+    for c in range(len(array)):
+        for k in range(1, 10):
+            if k == 9:
+                results.append(k)
+                break
+            elif array[c] < range_of_a_bucket * k:
+                results.append(k)
+                break
+
+    return results
+
+
+# The TMWM similarity between the products i and j using the parameters alpha and bete
+# TODO: def TMWMSim(p_i, p_j , alpha, beta):
+
+# The minimum of the number of product features that product i and j contain
+# TODO: def minFeatures(p_i, p_j):
+
+# Returns the clusters
+# TODO: def hClustering(dist, epsilon):
