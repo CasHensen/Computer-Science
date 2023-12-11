@@ -46,16 +46,18 @@ print()
 
 # ---------------------------------------------------------------------------
 # TODO: adjust
-b = 0
-r = 0
-for i in range(2, 10):
-    if int(len(binary_representation)) % (10-i) == 0:
+matches = []
+
+n = len(signature_matrix)
+for i in range(n):
+    if i%n == 0:
         b = i
-        r = int(int(len(binary_representation)) / i)
-        break
+        r = n/b
+        matches.append(functions.LSH(signature_matrix, b, r))
+
 # ---------------------------------------------------------------------------
 
-matches = functions.LSH(signature_matrix, b, r)
+#matches = functions.LSH(signature_matrix, b, r)
 # print(matches)
 # print()
 
@@ -76,13 +78,62 @@ print()
 
 number_of_items = len(signature_matrix[0])
 dissimilarities = np.ones((number_of_items, number_of_items)) * np.inf
-closest_item = np.zeros((number_of_items, 2))
-for col1 in range(number_of_items):
+closest_item = np.zeros((number_of_items, 3))
+for item1 in range(number_of_items):
     index_of_closest = 0
-    for col2 in range(col1+1, number_of_items):
-        if not inf_distances[col1].__contains__(col2):
-            # dissimilarities[col1][col2] = functions.dissimilarity()
-            if dissimilarities[col1][col2] < dissimilarities[col1][index_of_closest]:
-                index_of_closest = col2
-    closest_item[col1][0] = index_of_closest
-    closest_item[col1][1] = dissimilarities[col1][index_of_closest]
+    for item2 in range(item1 + 1, number_of_items):
+        if not inf_distances[item1].__contains__(item2):
+            temp = functions.dissimilarity(item1, item2, adjusted_list)
+            dissimilarities[item1][item2] = temp
+            dissimilarities[item2][item1] = temp
+            if temp < dissimilarities[item1][index_of_closest]:
+                index_of_closest = item2
+    closest_item[item1][0] = item1
+    closest_item[item1][1] = index_of_closest
+    closest_item[item1][2] = dissimilarities[item1][index_of_closest]
+
+clusters = []
+cluster = True
+threshold = 6
+while cluster:
+    #find minimum
+    minimum = threshold #set to threshold
+    dropped = 0
+    merged = 0
+    for item in range(closest_item):
+        if closest_item[item][2] < minimum:
+            minimum = closest_item[item][2]
+            dropped = closest_item[item][1]
+            merged = closest_item[item][0]
+
+    if minimum == threshold:
+        break
+
+    closest_item = np.delete(closest_item, dropped, 0)
+    clusters = clusters.append(tuple((merged, dropped)))
+
+    #adjust new values
+    new_min_merged = np.inf
+
+    for item in range(closest_item):
+        if closest_item[item][0] == merged:
+            for i in range(number_of_items):
+                if dissimilarities[merged][i] < new_min_merged and not nf_distances[dropped].__contains__(i):
+                    new_min_merged = dissimilarities[merged][i]
+                    closest_item[item][1] = i
+                    closest_item[item][2] = new_min_merged
+        elif closest_item[item][1] == dropped:
+            closest_item[item][1] = merged
+        elif closest_item[item][1] == merged:
+            if inf_distances[dropped].__contains__(closest_item[item][0]):
+                new_min = np.inf
+                dissimilarities[closest_item[item][0]][merged] = np.inf
+                dissimilarities[merged][closest_item[item][0]] = np.inf
+                for i in range(number_of_items):
+                    if dissimilarities[merged][i] < new_min:
+                        new_min = dissimilarities[closest_item[item][0]][i]
+                        closest_item[item][1] = i
+                        closest_item[item][2] = new_min
+
+
+
