@@ -114,16 +114,23 @@ while cluster:
 
     #adjust new values
     new_min_merged = np.inf
-
     for item in range(closest_item):
+        #adjust new closest item for items that is merged
         if closest_item[item][0] == merged:
             for i in range(number_of_items):
+                #update the merged dissimilarities to lowest value of the cluster
+                if dissimilarities[merged][i] > dissimilarities[dropped][i]:
+                    dissimilarities[merged][i] = dissimilarities[dropped][i]
+                    dissimilarities[i][merged] = dissimilarities[dropped][i]
+                #update the new closest item for the merged item
                 if dissimilarities[merged][i] < new_min_merged and not nf_distances[dropped].__contains__(i):
                     new_min_merged = dissimilarities[merged][i]
                     closest_item[item][1] = i
                     closest_item[item][2] = new_min_merged
+        #replace the item that is dropped by the newly merged item for items
         elif closest_item[item][1] == dropped:
             closest_item[item][1] = merged
+        #check whether the other product fall in the inf distance of the cluster, if so change their closest neighbour
         elif closest_item[item][1] == merged:
             if inf_distances[dropped].__contains__(closest_item[item][0]):
                 new_min = np.inf
