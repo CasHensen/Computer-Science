@@ -1,20 +1,14 @@
 Input documents
 ->
-TODO: BOOTSTRAPPING
+Bootstrapping
 ->
-Data cleaning
+Binary represantation
 ->
-Create distance matrix (some distances set to inf)
+Signature matrix
 ->
-To binary represantation:
-    - TODO: shingling (dat is dus per woord en heb nu q-grams met Jacard similarity, klopt nog niet helemaal)
+LSH
 ->
-TODO: Construct signature matrix
-    - TODO: minhasing
-->
-TODO: LSH
-->
-TODO: create inf distance matrix (same webshop, different brand or different bucket by LSH)
+Create inf distance matrix (same webshop, different brand or different bucket by LSH)
 ->
 TODO: MSM and clustering
 ->
