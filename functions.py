@@ -1,10 +1,8 @@
 import re
 import random
-# import pandas as pd
 import numpy as np
 from random import randint
-from math import ceil, sqrt
-from itertools import permutations
+from math import sqrt
 
 
 # Data cleaning of a string
@@ -24,24 +22,22 @@ def dataCleaningOfSingleString(string):
 
 # Calculate the q-gram similarity for strings q and r
 def calcSim(q, r):
+    q = dataCleaningOfSingleString(q)
+    r = dataCleaningOfSingleString(r)
+
+    length_q_gram = min(3, len(q), len(r))
     all_q_grams_of_q = []
     all_q_grams_of_r = []
-    length_q_gram = 3
+
     for i in range(len(q) - length_q_gram + 1):
         q_gram_of_q = q[i:i + length_q_gram]
-        if q_gram_of_q not in all_q_grams_of_q:
-            all_q_grams_of_q.append(q_gram_of_q)
-    print(all_q_grams_of_q)
-    intersection = []
+        all_q_grams_of_q.append(q_gram_of_q)
     union = all_q_grams_of_q.copy()
     for i in range(len(r) - length_q_gram + 1):
         q_gram_of_r = r[i:i + length_q_gram]
-        if q_gram_of_r not in all_q_grams_of_r:
-            all_q_grams_of_r.append(q_gram_of_r)
-            if q_gram_of_r in all_q_grams_of_q:
-                intersection.append(q_gram_of_r)
-            if q_gram_of_r not in union:
-                union.append(q_gram_of_r)
+        all_q_grams_of_r.append(q_gram_of_r)
+        union.append(q_gram_of_r)
+    intersection = np.intersect1d(all_q_grams_of_q, all_q_grams_of_r, assume_unique=False, return_indices=False)
     return len(intersection) / len(union)
 
 
@@ -57,10 +53,8 @@ def sameShop(p_i, p_j):
 def diffBrand(p_i, p_j):
     title_pi = dataCleaningOfSingleString(p_i["title"])
     title_pj = dataCleaningOfSingleString(p_j["title"])
-    print(title_pi)
-    print(title_pj)
     brands = ["akai", "alba", "apple", "arcam", "arise", "bang", "bpl", "bush", "cge", "changhong", "compal", "curtis", "durabrand", "element", "finlux", "fujitsu", "funai", "google", "haier", "hisense", "hitachi", "itel", "jensen", "jvc", "kogan", "konka", "lg", "loewe", "magnavox", "marantz", "memorex", "micromax", "metz", "onida", "panasonic", "pensonic", "philips", "planar", "proscan", "rediffusion", "saba", "salora", "samsung", "sansui", "sanyo", "seiki", "sharp", "skyworth", "sony", "tatung", "tcl", "telefunken", "thomson", "tpv", "tp vision", "vestel", "videocon", "vizio", "vu", "walton", "westinghouse", "xiaomi", "zenith"]
-    if any(word in title_pi for word in brands) & any(word in title_pj for word in brands):
+    if any(word in title_pi for word in brands) and any(word in title_pj for word in brands):
         for brand in brands:
             if title_pi.__contains__(brand) and title_pj.__contains__(brand):
                 return False
@@ -80,7 +74,7 @@ def find_modelWordsOfaProduct(product):
                 for word in model_words_KVP:
                     if word not in model_words:
                         model_words.append(word)
-        if k != "url" and k != "featuresMap":
+        if k == "title":
             model_words_string = model_words + find_modelWordsOfaString(product[k])
             for word in model_words_string:
                 if word not in model_words:
@@ -108,13 +102,6 @@ def find_modelWordsOfaKVP(string):
         if re.search(r"(\d+)[^0-9]+|[^0-9]+(\d+)", string_splitted[w]):
             model_words.append(string_splitted[w])
     return model_words
-
-
-# Percentage of matching model words from two sets of model words
-def mw(C, D):
-    intersection = C.intersection(D)
-    union = C.union(D)
-    return float(len(intersection))/float(len(union))
 
 
 def minHashing(binary_data, number_of_hashes, number_of_mw):
@@ -159,50 +146,58 @@ def apply_hashes(binary_data, param_hash_functions, number_of_mw):  # param_hash
     return hash_results
 
 
-def LSH(signature_matrix, b, r, length):
+def LSH(signature_matrix, b, r):
     number_of_items = len(signature_matrix[0])
-    index = 0
-    buckets = np.zeros((b, number_of_items))
-
-    for band in range(b):
-        total_col_sum = 0
-        for row in range(r):
-            index = band * r + row
-            total_col_sum += signature_matrix[index]
-        buckets[band] = hashBucket(np.array(total_col_sum), sqrt(length))
 
     matches = []
     for col1 in range(number_of_items):
         matches_per_col = []  # at least one band same value
         for col2 in range(number_of_items):
-            for buck_row in range(b):
-                if buckets[buck_row, col1] == buckets[buck_row, col2] and col1 != col2 and not matches_per_col.__contains__(col2):
-                    matches_per_col.append(col2)
+            if col1 != col2:
+                for band in range(b):
+                    exact_match = True
+                    for row in range(r):
+                        index = band * r + row
+                        if signature_matrix[index][col1] != signature_matrix[index][col2]:
+                            exact_match = False
+                            break
+                    if exact_match is True:
+                        matches_per_col.append(col2)
+                        break
+
         matches.append(matches_per_col)
 
     return matches
 
 
-def hashBucket(array, length):
-    results = []
-    range_of_a_bucket = length
-    for c in range(len(array)):
-        for k in range(1, 10):
-            if k == 9:
-                results.append(k)
-                break
-            elif array[c] < range_of_a_bucket * k:
-                results.append(k)
-                break
+def dissimilarity(item1, item2, adjusted_list):
+    keys_item1_featuresMap = list(adjusted_list[item1]["featuresMap"].keys())
+    keys_item2_featuresMap = list(adjusted_list[item2]["featuresMap"].keys())
+    intersection_keys = np.intersect1d(keys_item1_featuresMap, keys_item2_featuresMap)
 
-    return results
+    dsim1 = 0
+    for matching_key in intersection_keys:
+        dsim1 += calcSim(adjusted_list[item1]["featuresMap"][matching_key], adjusted_list[item2]["featuresMap"][matching_key])
 
+    unique_keys_item1 = np.setdiff1d(keys_item1_featuresMap, intersection_keys)
+    unique_keys_item2 = np.setdiff1d(keys_item2_featuresMap, intersection_keys)
 
-# The TMWM similarity between the products i and j using the parameters alpha and bete
-# TODO: def TMWMSim(p_i, p_j , alpha, beta):
+    model_words_item_1_non_matching_keys = []
+    model_words_item_2_non_matching_keys = []
 
-# The minimum of the number of product features that product i and j contain
-# TODO: def minFeatures(p_i, p_j):
+    for non_matching_key in unique_keys_item1:
+        model_words_item_1_non_matching_keys.extend(find_modelWordsOfaString(adjusted_list[item1]["featuresMap"][non_matching_key]))
 
-# Returns the clusters
-# TODO: def hClustering(dist, epsilon):
+    for non_matching_key in unique_keys_item2:
+        model_words_item_2_non_matching_keys.extend(find_modelWordsOfaString(adjusted_list[item2]["featuresMap"][non_matching_key]))
+
+    dsim2 = len(np.intersect1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys)) / len(np.union1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys))
+
+    model_words_item_1_title = find_modelWordsOfaString(adjusted_list[item1]["title"])
+    model_words_item_2_title = find_modelWordsOfaString(adjusted_list[item2]["title"])
+
+    dsim3 = len(np.intersect1d(model_words_item_1_title, model_words_item_2_title)) / len(np.union1d(model_words_item_1_title, model_words_item_2_title))
+
+    weighted_dissimilarity = 1/3 * dsim1 + 1/3 * dsim2 + 1/3 * dsim3
+    return weighted_dissimilarity
+
