@@ -199,7 +199,7 @@ def dissimilarity(item1, item2, adjusted_list):
     weighted_dissimilarity = 1/3 * dsim1 + 1/3 * dsim2 + 1/3 * dsim3
     return weighted_dissimilarity
 
-def F1_Score(matches, number_of_items, adjusted_list):
+def F1_Score(matches, adjusted_list):
     #number of duplicates found
     Df = 0
     #number of comparisons made
@@ -207,12 +207,12 @@ def F1_Score(matches, number_of_items, adjusted_list):
     #total number of duplicates
     Dn = 0
 
-    for item1 in adjusted_list:
+    for item1 in range(len(adjusted_list)):
 
         ID = 0
-        for k in item1.keys():
+        for k in adjusted_list[item1].keys():
             if k == "modelID":
-                ID = item1[k]
+                ID = adjusted_list[item1][k]
 
         for item2 in adjusted_list:
             for k in item2.keys():
@@ -221,16 +221,23 @@ def F1_Score(matches, number_of_items, adjusted_list):
                         Dn += 1
 
         Nc += len(matches[item1])
-        for item2 in Nc:
-            for k in item2.keys():
+        for item2 in matches[item1]:
+            for k in adjusted_list[item2].keys():
                 if k == "modelID":
-                    if item2[k] == ID:
+                    if adjusted_list[item2][k] == ID:
                         Df += 1
 
-    PQ = Df/Nc
-    PC = Df/Dn
+    PQ = 0
+    if not Nc == 0:
+        PQ = Df / Nc
 
-    F1 = (2*PQ*PC)/(PC+PQ)
+    PC = 0
+    if not Dn == 0:
+        PC = Df / Dn
+
+    F1 = 0
+    if not PC + PQ == 0:
+        F1 = (2 * PQ * PC) / (PC + PQ)
 
     return F1
 

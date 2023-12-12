@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 # Load all data
-with open("TVs-all-merged.json", "r") as file:
+with open("TVs-all-merged_short.json", "r") as file:
     data = json.load(file)
 
 # Create list of all entries
@@ -16,6 +16,7 @@ for v in data.values():
 # Create different bootstraps
 random.seed(0)
 boot = 5
+adjusted_list = []
 for i in range(boot):
     adjusted_list = random.sample(list_adjusted, int(0.7*len(list_adjusted)))
 
@@ -47,16 +48,25 @@ print()
 # ---------------------------------------------------------------------------
 # TODO: adjust
 F1 = []
-
+matches_best = []
+F1_best = -1
 n = len(signature_matrix)
-for i in range(n):
+for i in range(2, n):
     matches = []
-    if i%n == 0:
+    if n%i == 0:
         b = i
-        r = n/b
-        matches.append(functions.LSH(signature_matrix, b, r))
+        r = int(n/b)
+        matches = functions.LSH(signature_matrix, b, r)
+        print(len(matches[1]))
+        F1_new = functions.F1_Score(matches, adjusted_list)
+        F1.append(F1_new)
+        if(F1_best < F1_new):
+            F1_best = F1_new
+            matches_best = matches
 
-    F1.append(functions)
+
+
+
 
 
 
@@ -76,7 +86,7 @@ for item_i in range(0, len(adjusted_list)):
                 temp_for_inf_distance.append(item_j)
             elif functions.diffBrand(adjusted_list[item_i], adjusted_list[item_j]):
                 temp_for_inf_distance.append(item_j)
-            elif not matches[item_i].__contains__(item_j):
+            elif not matches_best[item_i].__contains__(item_j):
                 temp_for_inf_distance.append(item_j)
     inf_distances.append(temp_for_inf_distance)
 print(inf_distances)
@@ -106,7 +116,7 @@ while cluster:
     minimum = threshold #set to threshold
     dropped = 0
     merged = 0
-    for item in range(closest_item):
+    for item in range(len(closest_item)):
         if closest_item[item][2] < minimum:
             minimum = closest_item[item][2]
             dropped = closest_item[item][1]
