@@ -46,14 +46,20 @@ print()
 
 # ---------------------------------------------------------------------------
 # TODO: adjust
-matches = []
+F1 = []
 
 n = len(signature_matrix)
 for i in range(n):
+    matches = []
     if i%n == 0:
         b = i
         r = n/b
         matches.append(functions.LSH(signature_matrix, b, r))
+
+    F1.append(functions)
+
+
+
 
 # ---------------------------------------------------------------------------
 

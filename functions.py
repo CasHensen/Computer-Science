@@ -164,9 +164,7 @@ def LSH(signature_matrix, b, r):
                     if exact_match is True:
                         matches_per_col.append(col2)
                         break
-
         matches.append(matches_per_col)
-
     return matches
 
 
@@ -200,4 +198,39 @@ def dissimilarity(item1, item2, adjusted_list):
 
     weighted_dissimilarity = 1/3 * dsim1 + 1/3 * dsim2 + 1/3 * dsim3
     return weighted_dissimilarity
+
+def F1_Score(matches, number_of_items, adjusted_list):
+    #number of duplicates found
+    Df = 0
+    #number of comparisons made
+    Nc = 0
+    #total number of duplicates
+    Dn = 0
+
+    for item1 in adjusted_list:
+
+        ID = 0
+        for k in item1.keys():
+            if k == "modelID":
+                ID = item1[k]
+
+        for item2 in adjusted_list:
+            for k in item2.keys():
+                if k == "modelID":
+                    if item2[k] == ID:
+                        Dn += 1
+
+        Nc += len(matches[item1])
+        for item2 in Nc:
+            for k in item2.keys():
+                if k == "modelID":
+                    if item2[k] == ID:
+                        Df += 1
+
+    PQ = Df/Nc
+    PC = Df/Dn
+
+    F1 = (2*PQ*PC)/(PC+PQ)
+
+    return F1
 
