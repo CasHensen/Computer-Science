@@ -188,14 +188,19 @@ def dissimilarity(item1, item2, adjusted_list):
     for non_matching_key in unique_keys_item2:
         model_words_item_2_non_matching_keys.extend(find_modelWordsOfaString(adjusted_list[item2]["featuresMap"][non_matching_key]))
 
-    dsim2 = len(np.intersect1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys)) / len(np.union1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys))
+    dsim2 = 0
+    if len(np.union1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys)) != 0:
+        dsim2 = len(np.intersect1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys)) / len(np.union1d(model_words_item_1_non_matching_keys, model_words_item_2_non_matching_keys))
 
     model_words_item_1_title = find_modelWordsOfaString(adjusted_list[item1]["title"])
     model_words_item_2_title = find_modelWordsOfaString(adjusted_list[item2]["title"])
 
-    dsim3 = len(np.intersect1d(model_words_item_1_title, model_words_item_2_title)) / len(np.union1d(model_words_item_1_title, model_words_item_2_title))
+    dsim3 = 0
+    if len(np.union1d(model_words_item_1_title, model_words_item_2_title)) != 0:
+        dsim3 = len(np.intersect1d(model_words_item_1_title, model_words_item_2_title)) / len(np.union1d(model_words_item_1_title, model_words_item_2_title))
 
     weighted_dissimilarity = 1/3 * dsim1 + 1/3 * dsim2 + 1/3 * dsim3
+
     return weighted_dissimilarity
 
 
