@@ -2,7 +2,6 @@ import re
 import random
 import numpy as np
 from random import randint
-from math import sqrt
 
 
 # Data cleaning of a string
