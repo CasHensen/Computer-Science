@@ -2,6 +2,8 @@ import json
 import functions
 import random
 import numpy as np
+from scipy.cluster.hierarchy import dendrogram, linkage
+
 
 # Load all data
 with open("TVs-all-merged_short.json", "r") as file:
@@ -107,6 +109,12 @@ for item1 in range(number_of_items):
     closest_item[item1][0] = item1
     closest_item[item1][1] = index_of_closest
     closest_item[item1][2] = dissimilarities[item1][index_of_closest]
+
+# dissimilarities[dissimilarities == np.inf] = 1000000000
+
+# Z = linkage(dissimilarities, 'single')
+# dn = dendrogram(Z)
+
 
 clusters = []
 cluster = True
