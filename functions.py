@@ -108,8 +108,8 @@ def minHashing(binary_data, number_of_hashes, number_of_mw):
     primes = [i for i in range(5, 100) if checkIfPrime(i)]              # which bounds?????????????????????
     parameters_of_hash_functions = []
     for i in range(0, number_of_hashes):
-        a = randint(0, 20)                                      # which bounds?????????????????????
-        b = randint(0, 20)                                      # which bounds?????????????????????
+        a = randint(1, 21)                                      # which bounds?????????????????????
+        b = randint(1, 21)                                      # which bounds?????????????????????
         p = random.choice(primes)
         parameters = [a, b, p]
         parameters_of_hash_functions.append(parameters)
@@ -199,33 +199,25 @@ def dissimilarity(item1, item2, adjusted_list):
     weighted_dissimilarity = 1/3 * dsim1 + 1/3 * dsim2 + 1/3 * dsim3
     return weighted_dissimilarity
 
-def F1_Score(matches, adjusted_list):
-    #number of duplicates found
+
+def F1_Score(matches, adjusted_list, number_of_items, b, r):
+    # Number of comparisons made
+    Nc = (b * r) * number_of_items * (number_of_items - 1)
+    # Number of duplicates found
     Df = 0
-    #number of comparisons made
-    Nc = 0
-    #total number of duplicates
+    # Total number of duplicates
     Dn = 0
 
-    for item1 in range(len(adjusted_list)):
+    unique_IDs_original = []
+    for item in adjusted_list:
+        if item["modelID"] not in unique_IDs_original:
+            unique_IDs_original.append(item["modelID"])
+        elif item["modelID"] in unique_IDs_original:
+            Dn += 1
 
-        ID = 0
-        for k in adjusted_list[item1].keys():
-            if k == "modelID":
-                ID = adjusted_list[item1][k]
-
-        for item2 in adjusted_list:
-            for k in item2.keys():
-                if k == "modelID":
-                    if item2[k] == ID:
-                        Dn += 1
-
-        Nc += len(matches[item1])
-        for item2 in matches[item1]:
-            for k in adjusted_list[item2].keys():
-                if k == "modelID":
-                    if adjusted_list[item2][k] == ID:
-                        Df += 1
+    for item in range(len(matches)):
+        Df += len(matches[item])
+    Df /= 2     # pair-wise comparison
 
     PQ = 0
     if not Nc == 0:
@@ -240,4 +232,3 @@ def F1_Score(matches, adjusted_list):
         F1 = (2 * PQ * PC) / (PC + PQ)
 
     return F1
-
