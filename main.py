@@ -61,6 +61,7 @@ for i in range(boot):
                 F1_best = F1_new
 
             # CLustering
+            cluster = functions.cluster(matches, adjusted_list)
 
     # ---------------------------------------------------------------------------
 
