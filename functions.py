@@ -2,6 +2,7 @@ import re
 import random
 import numpy as np
 from random import randint
+from tqdm import tqdm
 
 
 # Data cleaning of a string
@@ -110,7 +111,7 @@ def minHashing(binary_data, number_of_hashes, number_of_mw):
         a = randint(1, 21)                                      # which bounds?????????????????????
         b = randint(1, 21)                                      # which bounds?????????????????????
         p = random.choice(primes)
-        parameters = [a, b, p]
+        parameters = np.array([a, b, p])
         parameters_of_hash_functions.append(parameters)
     return apply_hashes(binary_data, parameters_of_hash_functions, number_of_mw)
 
@@ -130,17 +131,19 @@ def apply_hashes(binary_data, param_hash_functions, number_of_mw):  # param_hash
     number_of_items = len(binary_data)
     hash_results = np.ones((number_of_hash_functions, number_of_items)) * np.inf  # initialize with infinity
 
-    for col in range(0, number_of_mw):
-        for hash_func in range(0, number_of_hash_functions):
-            a = param_hash_functions[hash_func][0]
-            b = param_hash_functions[hash_func][1]
-            p = param_hash_functions[hash_func][2]
-            hash_value = (a + b * (col+1)) % p
+    def h(i, row):
+        a = param_hash_functions[i][0]
+        b = param_hash_functions[i][1]
+        p = param_hash_functions[i][2]
+        return (a + b * (row+1)) % p
 
-            for i in range(0, number_of_items):
-                if binary_data[i].__contains__(col):
-                    if hash_value < hash_results[hash_func][i]:
-                        hash_results[hash_func][i] = hash_value
+    hash_functions = np.array([[h(i, row) for row in range(number_of_mw)] for i in range(number_of_hash_functions)])
+
+    for col, indices in enumerate(tqdm(binary_data)):
+        for row in indices:
+            for hash_func in range(0, number_of_hash_functions):
+                row_hash = hash_functions[hash_func, row]
+                hash_results[hash_func, col] = np.min([hash_results[hash_func, col], row_hash])
 
     return hash_results
 
