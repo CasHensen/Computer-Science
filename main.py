@@ -55,7 +55,8 @@ for i in range(boot):
 
     # ---------------------------------------------------------------------------
     # TODO: adjust
-    # F1 = []
+    F1 = []
+    F1Star = []
     # F1_best = -1
     n = len(signature_matrix)
     for i in tqdm(range(2, n)):
@@ -65,13 +66,16 @@ for i in range(boot):
             r = int(n/b)
             [matches, Nc] = functions.LSH(signature_matrix, b, r)
 
-            functions.F1_star_score(Nc, matches, adjusted_list, duplicates)
+            F1Star.append(functions.F1_star_score(Nc, matches, adjusted_list, duplicates))
 
             # CLustering
             cluster = functions.clusterZELF(matches, adjusted_list, b)
 
-            functions.F1_score(Nc, cluster, adjusted_list, duplicates)
+            F1.append(functions.F1_score(Nc, cluster, adjusted_list, duplicates))
             # print(cluster.n_clusters_)
             # print(cluster.labels_)
             # print()
+
+    print(F1Star)
+    print(F1)
 
