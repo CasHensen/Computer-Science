@@ -180,6 +180,59 @@ def LSH(signature_matrix, b, r):
     return candidate_pairs
 
 
+def similarity(item1, item2):
+    # Similarity measure 1 & 2
+    sim1 = 0
+    avgSim1 = 0
+    w1 = 0
+    m = 0
+
+    keys1 = list(item1["featuresMap"].keys())
+    keys2 = list(item2["featuresMap"].keys())
+
+    for key1, values1 in item1["featuresMap"].items():
+        for key2, values2 in item2["featuresMap"].items():
+            gamma = 0.3
+            keySim = calcSim(key1, key2)
+
+            if keySim > gamma:
+                valueSim = calcSim(values1, values2)
+                weight = keySim
+
+                m += 1
+                w1 += weight
+                sim1 += weight * valueSim
+
+                keys1.remove(key1)
+                keys2.remove(key2)
+
+    if w1 > 0:
+        avgSim1 = sim1 / w1
+
+    sim2 = 0
+    mw1 = []
+    mw2 = []
+
+    for i in keys1:
+        mw1.extend(find_modelWordsOfaString(item1["featuresMap"][i]))
+
+    for i in keys2:
+        mw2.extend(find_modelWordsOfaString(item2["featuresMap"][i]))
+
+    if len(np.union1d(mw1, mw2)) != 0:
+        sim2 = len(np.intersect1d(mw1, mw2)) / len(np.union1d(mw1, mw2))
+
+
+    #similarity measure 3
+    sim3 = 0
+    mw_title1 = find_modelWordsOfaString(item1["title"])
+    mw_title2 = find_modelWordsOfaString(item2["title"])
+
+    if len(np.union1d(mw_title1, mw_title2)) != 0:
+        sim3 = len(np.intersect1d(mw_title1, mw_title2)) / len(np.union1d(mw_title1, mw_title2))
+
+    return 1- (1/3 * sim1 + 1/3 * sim2 + 1/3 * sim3)
+
 def dissimilarity(item1, item2, adjusted_list):
     keys_item1_featuresMap = list(adjusted_list[item1]["featuresMap"].keys())
     keys_item2_featuresMap = list(adjusted_list[item2]["featuresMap"].keys())
