@@ -2,6 +2,7 @@ import json
 import functions
 import random
 from tqdm import tqdm
+import numpy as np
 
 # Load all data
 with open("TVs-all-merged.json", "r") as file:
@@ -19,6 +20,16 @@ boot = 1  # 5
 adjusted_list = []
 for i in range(boot):
     adjusted_list = random.sample(list_adjusted, int(0.7*len(list_adjusted)))
+
+    number_of_items = len(adjusted_list)
+    duplicates = np.zeros((number_of_items, number_of_items))
+    for index1 in range(len(adjusted_list)):
+        item1 = adjusted_list[index1]
+        for index2 in range(len(adjusted_list)):
+            item2 = adjusted_list[index2]
+            if not index1 == index2:
+                if item1["modelID"] == item2["modelID"]:
+                    duplicates[index1][index2] = 1
 
     # Store all model words
     all_model_words = []
@@ -52,15 +63,14 @@ for i in range(boot):
         if n % i == 0:
             b = i
             r = int(n/b)
-            matches = functions.LSH(signature_matrix, b, r)
+            [matches, Nc] = functions.LSH(signature_matrix, b, r)
 
-            # F1_new = functions.F1_Score(matches, adjusted_list, len(signature_matrix[0]), b, r)
-            # F1.append(F1_new)
-            # if F1_best < F1_new:
-            #     F1_best = F1_new
+            functions.F1_star_score(Nc, matches, adjusted_list, duplicates)
 
             # CLustering
             cluster = functions.clusterZELF(matches, adjusted_list, b)
+
+            functions.F1_score(Nc, cluster, adjusted_list, duplicates)
             # print(cluster.n_clusters_)
             # print(cluster.labels_)
             # print()
