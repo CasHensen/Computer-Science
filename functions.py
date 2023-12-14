@@ -151,23 +151,33 @@ def apply_hashes(binary_data, param_hash_functions, number_of_mw):  # param_hash
 def LSH(signature_matrix, b, r):
     number_of_items = len(signature_matrix[0])
 
-    matches = []
-    for col1 in range(number_of_items):
-        matches_per_col = []  # at least one band same value
-        for col2 in range(number_of_items):
-            if col1 != col2:
-                for band in range(b):
-                    exact_match = True
-                    for row in range(r):
-                        index = band * r + row
-                        if signature_matrix[index][col1] != signature_matrix[index][col2]:
-                            exact_match = False
-                            break
-                    if exact_match is True:
-                        matches_per_col.append(col2)
-                        break
-        matches.append(matches_per_col)
-    return matches
+    # Generate buckets per band
+    overall_result_dict = {}
+    for band in range(b):
+        band_result_dict = {}
+        for item in range(number_of_items):
+            key_of_col_in_band = '-'.join(
+                map(str, [col[item] for col in signature_matrix[(band * r):((band + 1) * r)]]))
+
+            if key_of_col_in_band not in band_result_dict:
+                band_result_dict[key_of_col_in_band] = [item]
+            else:
+                band_result_dict[key_of_col_in_band].append(item)
+
+        overall_result_dict[band] = band_result_dict
+
+    # Find candidate pairs, meaning they are the same in at least one bucket
+    candidate_pairs = {}
+    for band_results in overall_result_dict.values():
+        for values in band_results.values():
+            if len(values) > 1:
+                for item_index in values:
+                    if item_index not in candidate_pairs:
+                        candidate_pairs[item_index] = set(values)
+                    else:
+                        candidate_pairs[item_index].update(values)
+
+    return candidate_pairs
 
 
 def dissimilarity(item1, item2, adjusted_list):
