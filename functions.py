@@ -249,3 +249,22 @@ def F1_Score(matches, adjusted_list, number_of_items, b, r):
         F1 = (2 * PQ * PC) / (PC + PQ)
 
     return F1
+
+def cluster(matches, adjusted_list):
+    number_of_items = len(adjusted_list)
+    distances = np.ones((number_of_items, number_of_items)) * 1000000
+    np.fill_diagonal(distances, 0)
+    for key, value in matches.item():
+        for v in value:
+            if not key == v:
+                item1 = adjusted_list[key]
+                item2 = adjusted_list[v]
+                if not (sameShop(item1, item2) or diffBrand(item1, item2)):
+                    temp = dissimilarity(key, v, adjusted_list)
+                    distances[key][v] = temp
+                    distances[v][key] = temp
+
+    threshold = 0.5
+    clustering = AgglomerativeClustering(linkage='complete', distance_threshold=threshold, metric = 'precomputed', n_clusters = 'None').fit(distances)
+
+    return clustering
