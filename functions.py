@@ -3,6 +3,7 @@ import random
 import numpy as np
 from random import randint
 from tqdm import tqdm
+from sklearn.cluster import AgglomerativeClustering
 
 
 # Data cleaning of a string
@@ -166,72 +167,21 @@ def LSH(signature_matrix, b, r):
 
         overall_result_dict[band] = band_result_dict
 
+    number_of_candidates_found = 0
     # Find candidate pairs, meaning they are the same in at least one bucket
     candidate_pairs = {}
     for band_results in overall_result_dict.values():
         for values in band_results.values():
             if len(values) > 1:
+                number_of_candidates_found += 1
                 for item_index in values:
                     if item_index not in candidate_pairs:
                         candidate_pairs[item_index] = set(values)
                     else:
                         candidate_pairs[item_index].update(values)
 
-    return candidate_pairs
+    return candidate_pairs, number_of_candidates_found
 
-
-def similarity(item1, item2):
-    # Similarity measure 1 & 2
-    sim1 = 0
-    avgSim1 = 0
-    w1 = 0
-    m = 0
-
-    keys1 = list(item1["featuresMap"].keys())
-    keys2 = list(item2["featuresMap"].keys())
-
-    for key1, values1 in item1["featuresMap"].items():
-        for key2, values2 in item2["featuresMap"].items():
-            gamma = 0.3
-            keySim = calcSim(key1, key2)
-
-            if keySim > gamma:
-                valueSim = calcSim(values1, values2)
-                weight = keySim
-
-                m += 1
-                w1 += weight
-                sim1 += weight * valueSim
-
-                keys1.remove(key1)
-                keys2.remove(key2)
-
-    if w1 > 0:
-        avgSim1 = sim1 / w1
-
-    sim2 = 0
-    mw1 = []
-    mw2 = []
-
-    for i in keys1:
-        mw1.extend(find_modelWordsOfaString(item1["featuresMap"][i]))
-
-    for i in keys2:
-        mw2.extend(find_modelWordsOfaString(item2["featuresMap"][i]))
-
-    if len(np.union1d(mw1, mw2)) != 0:
-        sim2 = len(np.intersect1d(mw1, mw2)) / len(np.union1d(mw1, mw2))
-
-
-    #similarity measure 3
-    sim3 = 0
-    mw_title1 = find_modelWordsOfaString(item1["title"])
-    mw_title2 = find_modelWordsOfaString(item2["title"])
-
-    if len(np.union1d(mw_title1, mw_title2)) != 0:
-        sim3 = len(np.intersect1d(mw_title1, mw_title2)) / len(np.union1d(mw_title1, mw_title2))
-
-    return 1- (1/3 * sim1 + 1/3 * sim2 + 1/3 * sim3)
 
 def dissimilarity(item1, item2, adjusted_list):
     keys_item1_featuresMap = list(adjusted_list[item1]["featuresMap"].keys())
@@ -267,12 +217,12 @@ def dissimilarity(item1, item2, adjusted_list):
 
     weighted_dissimilarity = 1/3 * dsim1 + 1/3 * dsim2 + 1/3 * dsim3
 
-    return weighted_dissimilarity
+    return 1 / weighted_dissimilarity if weighted_dissimilarity != 0 else 1000
 
 
 def F1_Score(matches, adjusted_list, number_of_items, b, r):
     # Number of comparisons made
-    Nc = (b * r) * number_of_items * (number_of_items - 1)
+    Nc = (b * r) * number_of_items * (number_of_items - 1)      # aantal candidate pairs LSH
     # Number of duplicates found
     Df = 0
     # Total number of duplicates
@@ -303,11 +253,11 @@ def F1_Score(matches, adjusted_list, number_of_items, b, r):
 
     return F1
 
-def cluster(matches, adjusted_list):
+
+def clusterZELF(matches, adjusted_list, b):
     number_of_items = len(adjusted_list)
-    distances = np.ones((number_of_items, number_of_items)) * 1000000
-    np.fill_diagonal(distances, 0)
-    for key, value in matches.item():
+    distances = np.ones((number_of_items, number_of_items)) * np.inf
+    for key, value in matches.items():
         for v in value:
             if not key == v:
                 item1 = adjusted_list[key]
@@ -317,7 +267,66 @@ def cluster(matches, adjusted_list):
                     distances[key][v] = temp
                     distances[v][key] = temp
 
-    threshold = 0.5
-    clustering = AgglomerativeClustering(linkage='complete', distance_threshold=threshold, metric = 'precomputed', n_clusters = 'None').fit(distances)
+    clusters = []
+    continue_cluster = True
+    threshold = 0.97
+    while continue_cluster:
+        # Find minimum
+        minimum = np.min(distances)
+        print("Minimum", minimum)
+        # print(minimum)
+        min_indices = np.unravel_index(np.argmin(distances), distances.shape)
+        # print(min_indices)
+        merged_to = np.min(min_indices)
+        dropped = np.max(min_indices)
 
-    return clustering
+        if minimum > threshold:
+            break
+
+        # Update clusters
+        cluster_of_merged_to = next((tup for tup in clusters if merged_to in tup), None)
+        cluster_of_dropped = next((tup for tup in clusters if dropped in tup), None)
+
+        if cluster_of_merged_to is not None:
+            if cluster_of_dropped is None:
+                clusters.remove(cluster_of_merged_to)
+                new_cluster_tuple = cluster_of_merged_to + (dropped,)
+                clusters.append(new_cluster_tuple)
+            elif cluster_of_dropped != cluster_of_merged_to:
+                clusters.remove(cluster_of_merged_to)
+                clusters.remove(cluster_of_dropped)
+                new_cluster_tuple = cluster_of_merged_to + cluster_of_dropped
+                clusters.append(new_cluster_tuple)
+        elif cluster_of_dropped is not None:
+            clusters.remove(cluster_of_dropped)
+            new_cluster_tuple = cluster_of_dropped + (merged_to,)
+            clusters.append(new_cluster_tuple)
+        else:  # merged_to and dropped both not part of a cluster yet
+            clusters.append(tuple((merged_to, dropped)))
+
+        distances[merged_to][dropped] = np.inf
+        distances[dropped][merged_to] = np.inf
+
+        # Adjust distance matrix
+        # Update the merged dissimilarities to the lowest value of the cluster (unless dropped had inf distance to item)
+        for i in range(number_of_items):
+            # Update the merged dissimilarities to the lowest value of the cluster (unless dropped had inf distance to item)
+            if distances[merged_to][i] != np.inf and distances[merged_to][i] > distances[dropped][i]:
+                distances[merged_to][i] = distances[dropped][i]
+                distances[i][merged_to] = distances[dropped][i]
+            elif distances[merged_to][i] != np.inf and distances[merged_to][i] < distances[dropped][i]:
+                distances[dropped][i] = distances[merged_to][i]
+                distances[i][dropped] = distances[merged_to][i]
+            # If merged had inf distance with i, dropped now also has inf distance with i
+            elif distances[dropped][i] != np.inf and distances[merged_to][i] == np.inf:
+                distances[dropped][i] = np.inf
+                distances[i][dropped] = np.inf
+            elif distances[dropped][i] == np.inf and distances[merged_to][i] != np.inf:
+                distances[merged_to][i] = np.inf
+                distances[i][merged_to] = np.inf
+
+    print(clusters)
+    print(f"The length of clusters for iteration with {b} is: {len(clusters)}")
+    print()
+
+    return clusters
