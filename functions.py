@@ -3,7 +3,6 @@ import random
 import numpy as np
 from random import randint
 from tqdm import tqdm
-from sklearn.cluster import AgglomerativeClustering
 
 
 # Data cleaning of a string
@@ -223,7 +222,6 @@ def dissimilarity(item1, item2, adjusted_list):
 
 
 def F1_score(Nc, matches, adjusted_list, number_of_duplicates):
-    number_of_items = len(adjusted_list)
 
     # Number of duplicates found
     Df = 0
@@ -253,8 +251,7 @@ def F1_score(Nc, matches, adjusted_list, number_of_duplicates):
     return F1, PC, PQ
 
 
-def F1_star_score(Nc, matches, adjusted_list, duplicates, found):
-    number_of_items = len(adjusted_list)
+def F1_star_score(Nc, duplicates, found):
 
     Df = sum(sum(found * duplicates))/2
 

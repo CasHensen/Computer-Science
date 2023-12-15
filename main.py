@@ -17,9 +17,9 @@ for v in data.values():
 
 # Create different bootstraps
 random.seed(0)
-boot = 1  # 5
+boot = 5
 adjusted_list = []
-for i in range(boot):
+for bootstrap in range(boot):
     adjusted_list = random.sample(list_adjusted, int(0.63*len(list_adjusted)))
 
     number_of_items = len(adjusted_list)
@@ -72,13 +72,13 @@ for i in range(boot):
             r = int(n / b)
             [matches, Nc_value, found] = functions.LSH(signature_matrix, b, r)
 
-            [F1_value_Star, PC_value_Star, PQ_value_Star] = functions.F1_star_score(Nc_value, matches, adjusted_list, duplicates, found)
+            [F1_value_Star, PC_value_Star, PQ_value_Star] = functions.F1_star_score(Nc_value, duplicates, found)
             F1Star.append(F1_value_Star)
             PCStar.append(PC_value_Star)
             PQStar.append(PQ_value_Star)
             Nc.append(Nc_value)
 
-            # CLustering
+            # Clustering
             cluster = functions.cluster(matches, adjusted_list, b)
 
             [F1_value, PC_value, PQ_value] = functions.F1_score(Nc_value, cluster, adjusted_list, number_of_duplicates)
@@ -86,8 +86,15 @@ for i in range(boot):
             PC.append(PC_value)
             PQ.append(PQ_value)
 
-    print(F1Star)
-    print(F1)
+    print("-----------------------------------------------------------------------------------------------------")
+    print(F1Star, PCStar, PQStar)
+    print(F1, PC, PQ, Nc)
+    print("-----------------------------------------------------------------------------------------------------")
+    print()
 
+    str_value = "Results_Computer_Science"
+    str_value = str_value + str(bootstrap)
+    str_value = str_value + ".xlsx"
     df = pd.DataFrame(data=[F1Star, F1, PCStar, PC, PQStar, PQ, Nc])
-    df.to_excel("Results_Computer_Science.xlsx", index=False)
+
+    df.to_excel(str_value, index=False)
