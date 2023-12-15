@@ -106,11 +106,11 @@ def find_modelWordsOfaKVP(string):
 
 
 def minHashing(binary_data, number_of_hashes, number_of_mw):
-    primes = [i for i in range(5, 100) if checkIfPrime(i)]              # which bounds?????????????????????
+    primes = [i for i in range(7354925754, 7354925928) if checkIfPrime(i)]
     parameters_of_hash_functions = []
     for i in range(0, number_of_hashes):
-        a = randint(1, 21)                                      # which bounds?????????????????????
-        b = randint(1, 21)                                      # which bounds?????????????????????
+        a = randint(39265859274, 63859273832)
+        b = randint(39265859274, 63859273832)
         p = random.choice(primes)
         parameters = np.array([a, b, p])
         parameters_of_hash_functions.append(parameters)
@@ -119,7 +119,7 @@ def minHashing(binary_data, number_of_hashes, number_of_mw):
 
 def checkIfPrime(value):
     if value >= 2:
-        for n in range(2, value):
+        for n in range(2, int(np.ceil(np.sqrt(value)))):
             if (value % n) == 0:
                 return False
         return True
@@ -174,7 +174,8 @@ def LSH(signature_matrix, b, r):
     for band_results in overall_result_dict.values():
         for values in band_results.values():
             if len(values) > 1:
-                number_of_candidates_found += 1
+                number_of_candidates_found += ((len(values) - 1) * len(values) // 2)
+
                 for item_index in values:
                     if item_index not in candidate_pairs:
                         candidate_pairs[item_index] = set(values)
