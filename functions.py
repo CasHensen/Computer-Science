@@ -3,6 +3,7 @@ import random
 import numpy as np
 from random import randint
 # import extension_544966
+# import extension_535903
 # from tqdm import tqdm
 
 
@@ -287,7 +288,8 @@ def cluster(matches, adjusted_list, b):
                 item2 = adjusted_list[v]
                 # item1_clean_title = item1["title"]
                 # item2_clean_title = item2["title"]
-                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_544966.differentHz(item1_clean_title, item2_clean_title) or extension_544966.differentResolution(item1_clean_title, item2_clean_title)):
+                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_544966.differentHz(item1_clean_title, item2_clean_title)):
+                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_535903.differentResolution(item1_clean_title, item2_clean_title)):
                 if not (sameShop(item1, item2) or diffBrand(item1, item2)):
                     Nc += 1
                     temp = dissimilarity(key, v, adjusted_list)
