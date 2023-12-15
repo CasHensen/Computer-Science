@@ -1,7 +1,7 @@
 import json
 import functions
 import random
-from tqdm import tqdm
+# from tqdm import tqdm
 import numpy as np
 import pandas as pd
 
@@ -63,31 +63,34 @@ for bootstrap in range(boot):
     PQStar = []
     PC = []
     PQ = []
+    NcStar = []
     Nc = []
     n = len(signature_matrix)
-    for i in tqdm(range(2, n)):
+    # for i in tqdm(range(2, n)):
+    for i in range(2, n):
         # matches = []
         if n % i == 0:
             b = i
             r = int(n / b)
-            [matches, Nc_value, found] = functions.LSH(signature_matrix, b, r)
+            [matches, Nc_value_star, found] = functions.LSH(signature_matrix, b, r)
 
-            [F1_value_Star, PC_value_Star, PQ_value_Star] = functions.F1_star_score(Nc_value, duplicates, found)
+            [F1_value_Star, PC_value_Star, PQ_value_Star] = functions.F1_star_score(Nc_value_star, duplicates, found)
             F1Star.append(F1_value_Star)
             PCStar.append(PC_value_Star)
             PQStar.append(PQ_value_Star)
-            Nc.append(Nc_value)
+            NcStar.append(Nc_value_star)
 
             # Clustering
-            cluster = functions.cluster(matches, adjusted_list, b)
+            [cluster, Nc_value] = functions.cluster(matches, adjusted_list, b)
 
             [F1_value, PC_value, PQ_value] = functions.F1_score(Nc_value, cluster, adjusted_list, number_of_duplicates)
             F1.append(F1_value)
             PC.append(PC_value)
             PQ.append(PQ_value)
+            Nc.append(Nc_value)
 
     print("-----------------------------------------------------------------------------------------------------")
-    print(F1Star, PCStar, PQStar)
+    print(F1Star, PCStar, PQStar, NcStar)
     print(F1, PC, PQ, Nc)
     print("-----------------------------------------------------------------------------------------------------")
     print()
@@ -95,6 +98,6 @@ for bootstrap in range(boot):
     str_value = "Results_Computer_Science"
     str_value = str_value + str(bootstrap)
     str_value = str_value + ".xlsx"
-    df = pd.DataFrame(data=[F1Star, F1, PCStar, PC, PQStar, PQ, Nc])
+    df = pd.DataFrame(data=[F1Star, F1, PCStar, PC, PQStar, PQ, NcStar, Nc])
 
     df.to_excel(str_value, index=False)

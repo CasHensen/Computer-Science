@@ -2,7 +2,8 @@ import re
 import random
 import numpy as np
 from random import randint
-from tqdm import tqdm
+# import extension_544966
+# from tqdm import tqdm
 
 
 # Data cleaning of a string
@@ -139,7 +140,8 @@ def apply_hashes(binary_data, param_hash_functions, number_of_mw):  # param_hash
 
     hash_functions = np.array([[h(i, row) for row in range(number_of_mw)] for i in range(number_of_hash_functions)])
 
-    for col, indices in enumerate(tqdm(binary_data)):
+    # for col, indices in enumerate(tqdm(binary_data)):
+    for col, indices in enumerate(binary_data):
         for row in indices:
             for hash_func in range(0, number_of_hash_functions):
                 row_hash = hash_functions[hash_func, row]
@@ -181,7 +183,7 @@ def LSH(signature_matrix, b, r):
                         candidate_pairs[item_index].update(values)
                         found[item_index, values] = 1
 
-    return candidate_pairs, number_of_candidates_found, found
+    return candidate_pairs, number_of_candidates_found / 2, found
 
 
 def dissimilarity(item1, item2, adjusted_list):
@@ -276,12 +278,17 @@ def F1_star_score(Nc, duplicates, found):
 def cluster(matches, adjusted_list, b):
     number_of_items = len(adjusted_list)
     distances = np.ones((number_of_items, number_of_items)) * np.inf
+    Nc = 0
     for key, value in matches.items():
         for v in value:
             if not key == v:
                 item1 = adjusted_list[key]
                 item2 = adjusted_list[v]
+                # item1_clean_title = item1["title"]
+                # item2_clean_title = item2["title"]
+                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_544966.differentHz(item1_clean_title, item2_clean_title) or extension_544966.differentResolution(item1_clean_title, item2_clean_title)):
                 if not (sameShop(item1, item2) or diffBrand(item1, item2)):
+                    Nc += 1
                     temp = dissimilarity(key, v, adjusted_list)
                     distances[key][v] = temp
                     distances[v][key] = temp
@@ -345,4 +352,4 @@ def cluster(matches, adjusted_list, b):
     print(f"The length of clusters for iteration with {b} is: {len(clusters)}")
     print()
 
-    return clusters
+    return clusters, Nc / 2
