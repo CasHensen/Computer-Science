@@ -286,11 +286,11 @@ def cluster(matches, adjusted_list, b):
             if not key == v:
                 item1 = adjusted_list[key]
                 item2 = adjusted_list[v]
-                # item1_clean_title = item1["title"]
-                # item2_clean_title = item2["title"]
-                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_544966.differentHz(item1_clean_title, item2_clean_title)):
-                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_535903.differentResolution(item1_clean_title, item2_clean_title)):
+                # item1_clean_title = item1["title"]  # For extension
+                # item2_clean_title = item2["title"]  # For extension
                 if not (sameShop(item1, item2) or diffBrand(item1, item2)):
+                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_535903.differentResolution(item1_clean_title, item2_clean_title)):
+                # if not (sameShop(item1, item2) or diffBrand(item1, item2) or extension_544966.differentInch(item1_clean_title, item2_clean_title) or extension_544966.differentHz(item1_clean_title, item2_clean_title)):
                     Nc += 1
                     temp = dissimilarity(key, v, adjusted_list)
                     distances[key][v] = temp
@@ -298,7 +298,7 @@ def cluster(matches, adjusted_list, b):
 
     clusters = []
     continue_cluster = True
-    threshold = 10
+    threshold = 10  # 1 / 0.1 = 10 such that the threshold is a dissimilarity of 0.1
     while continue_cluster:
         # Find minimum
         minimum = np.min(distances)
