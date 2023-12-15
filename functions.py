@@ -184,59 +184,6 @@ def LSH(signature_matrix, b, r):
 
     return candidate_pairs, number_of_candidates_found, found
 
-def similarity(item1, item2):
-    # similarity measure 1 & 2
-    sim1 = 0
-    avgSim1 = 0
-    w1 = 0
-    m = 0
-
-    keys1 = list(item1["featuresMap"].keys())
-    keys2 = list(item2["featuresMap"].keys())
-
-    for key1, values1 in item1["featuresMap"].items():
-        for key2, values2 in item2["featuresMap"].items():
-            gamma = 0.5
-            keySim = calcSim(key1, key2)
-
-            if keySim > gamma:
-                valueSim = calcSim(values1, values2)
-                weight = keySim
-
-                m += 1
-                w1 += weight
-                sim1 += weight * valueSim
-                print(keys1.__contains__(key1))
-                if keys1.__contains__(key1):
-                    keys1.remove(key1)
-                keys2.remove(key2)
-
-    if w1 > 0:
-        avgSim1 = sim1 / w1
-
-    sim2 = 0
-    mw1 = []
-    mw2 = []
-
-    for i in keys1:
-        mw1.extend(find_modelWordsOfaString(item1["featuresMap"][i]))
-
-    for i in keys2:
-        mw2.extend(find_modelWordsOfaString(item2["featuresMap"][i]))
-
-    if len(np.union1d(mw1, mw2)) != 0:
-        sim2 = len(np.intersect1d(mw1, mw2)) / len(np.union1d(mw1, mw2))
-
-
-    #similarity measure 3
-    sim3 = 0
-    mw_title1 = find_modelWordsOfaString(item1["title"])
-    mw_title2 = find_modelWordsOfaString(item2["title"])
-
-    if len(np.union1d(mw_title1, mw_title2)) != 0:
-        sim3 = len(np.intersect1d(mw_title1, mw_title2)) / len(np.union1d(mw_title1, mw_title2))
-
-    return 1- (1/3 * sim1 + 1/3 * sim2 + 1/3 * sim3)
 
 def dissimilarity(item1, item2, adjusted_list):
     keys_item1_featuresMap = list(adjusted_list[item1]["featuresMap"].keys())
@@ -274,7 +221,8 @@ def dissimilarity(item1, item2, adjusted_list):
 
     return 1 / weighted_dissimilarity if weighted_dissimilarity != 0 else 1000
 
-def F1_score(Nc, matches, adjusted_list, duplicates):
+
+def F1_score(Nc, matches, adjusted_list, number_of_duplicates):
     number_of_items = len(adjusted_list)
 
     # Number of duplicates found
@@ -288,7 +236,7 @@ def F1_score(Nc, matches, adjusted_list, duplicates):
                         Df += 1
     Df = Df / 2
 
-    Dn = sum(sum(duplicates)) / 2
+    Dn = number_of_duplicates
 
     PQ = 0
     if not Nc == 0:
@@ -302,17 +250,11 @@ def F1_score(Nc, matches, adjusted_list, duplicates):
     if not PC + PQ == 0:
         F1 = (2 * PQ * PC) / (PC + PQ)
 
-    return F1
+    return F1, PC, PQ
+
 
 def F1_star_score(Nc, matches, adjusted_list, duplicates, found):
     number_of_items = len(adjusted_list)
-
-    # found = np.zeros((number_of_items, number_of_items))
-    #
-    # for key, values in matches.items():
-    #     for v in values:
-    #         if not v == key:
-    #             found[v][key] = 1
 
     Df = sum(sum(found * duplicates))/2
 
@@ -331,11 +273,10 @@ def F1_star_score(Nc, matches, adjusted_list, duplicates, found):
     if not PC + PQ == 0:
         F1 = (2 * PQ * PC) / (PC + PQ)
 
-    return F1
+    return F1, PC, PQ
 
 
-
-def clusterZELF(matches, adjusted_list, b):
+def cluster(matches, adjusted_list, b):
     number_of_items = len(adjusted_list)
     distances = np.ones((number_of_items, number_of_items)) * np.inf
     for key, value in matches.items():
@@ -344,21 +285,17 @@ def clusterZELF(matches, adjusted_list, b):
                 item1 = adjusted_list[key]
                 item2 = adjusted_list[v]
                 if not (sameShop(item1, item2) or diffBrand(item1, item2)):
-                    #temp = dissimilarity(key, v, adjusted_list)
-                    temp = similarity(adjusted_list[key], adjusted_list[v])
+                    temp = dissimilarity(key, v, adjusted_list)
                     distances[key][v] = temp
                     distances[v][key] = temp
 
     clusters = []
     continue_cluster = True
-    threshold = 0.70
+    threshold = 10
     while continue_cluster:
         # Find minimum
         minimum = np.min(distances)
-        print("Minimum", minimum)
-        # print(minimum)
         min_indices = np.unravel_index(np.argmin(distances), distances.shape)
-        # print(min_indices)
         merged_to = np.min(min_indices)
         dropped = np.max(min_indices)
 

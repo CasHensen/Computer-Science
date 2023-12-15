@@ -3,6 +3,7 @@ import functions
 import random
 from tqdm import tqdm
 import numpy as np
+import pandas as pd
 
 # Load all data
 with open("TVs-all-merged.json", "r") as file:
@@ -19,22 +20,25 @@ random.seed(0)
 boot = 1  # 5
 adjusted_list = []
 for i in range(boot):
-    adjusted_list = random.sample(list_adjusted, int(0.7*len(list_adjusted)))
+    adjusted_list = random.sample(list_adjusted, int(0.63*len(list_adjusted)))
 
     number_of_items = len(adjusted_list)
     duplicates = np.zeros((number_of_items, number_of_items))
-    for index1 in range(number_of_items):
+    number_of_duplicates = 0
+    for index1 in range(len(adjusted_list)):
         item1 = adjusted_list[index1]
-        for index2 in range(number_of_items):
+        for index2 in range(len(adjusted_list)):
             item2 = adjusted_list[index2]
             if not index1 == index2:
                 if item1["modelID"] == item2["modelID"]:
                     duplicates[index1][index2] = 1
+                    number_of_duplicates += 1
+    number_of_duplicates = int(number_of_duplicates/2)
 
     # Store all model words
     all_model_words = []
     model_words_per_item = []
-    for i in range(0, number_of_items):
+    for i in range(0, len(adjusted_list)):
         temp_mw = functions.find_modelWordsOfaProduct(adjusted_list[i])
         for word in temp_mw:
             if word not in all_model_words:
@@ -43,7 +47,7 @@ for i in range(boot):
 
     binary_representation = []
     # Create binary representation
-    for i in range(0, number_of_items):
+    for i in range(0, len(adjusted_list)):
         model_words_of_item_i = model_words_per_item[i]
         binary_model_words_of_i = []
         for element in range(0, len(all_model_words)):
@@ -53,29 +57,37 @@ for i in range(boot):
 
     signature_matrix = functions.minHashing(binary_representation, 1000, len(all_model_words))
 
-    # ---------------------------------------------------------------------------
-    # TODO: adjust
     F1 = []
     F1Star = []
-    # F1_best = -1
+    PCStar = []
+    PQStar = []
+    PC = []
+    PQ = []
+    Nc = []
     n = len(signature_matrix)
     for i in tqdm(range(2, n)):
         # matches = []
         if n % i == 0:
             b = i
-            r = int(n/b)
-            [matches, Nc, found] = functions.LSH(signature_matrix, b, r)
+            r = int(n / b)
+            [matches, Nc_value, found] = functions.LSH(signature_matrix, b, r)
 
-            F1Star.append(functions.F1_star_score(Nc, matches, adjusted_list, duplicates, found))
+            [F1_value_Star, PC_value_Star, PQ_value_Star] = functions.F1_star_score(Nc_value, matches, adjusted_list, duplicates, found)
+            F1Star.append(F1_value_Star)
+            PCStar.append(PC_value_Star)
+            PQStar.append(PQ_value_Star)
+            Nc.append(Nc_value)
 
             # CLustering
-            cluster = functions.clusterZELF(matches, adjusted_list, b)
+            cluster = functions.cluster(matches, adjusted_list, b)
 
-            F1.append(functions.F1_score(Nc, cluster, adjusted_list, duplicates))
-            # print(cluster.n_clusters_)
-            # print(cluster.labels_)
-            # print()
+            [F1_value, PC_value, PQ_value] = functions.F1_score(Nc_value, cluster, adjusted_list, number_of_duplicates)
+            F1.append(F1_value)
+            PC.append(PC_value)
+            PQ.append(PQ_value)
 
     print(F1Star)
     print(F1)
 
+    df = pd.DataFrame(data=[F1Star, F1, PCStar, PC, PQStar, PQ, Nc])
+    df.to_excel("Results_Computer_Science.xlsx", index=False)
